@@ -1,0 +1,6 @@
+duration,protocol,src_bytes,dst_bytes,flag,service,attack
+0,tcp,0,0,SF,http,normal
+0,tcp,0,0,SF,http,normal
+1,tcp,123,456,SF,ftp,attack
+2,udp,98,150,REJ,dns,normal
+3,tcp,200,500,RSTO,smtp,attack

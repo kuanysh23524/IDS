@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Классификация</title>
+</head>
+<body>
+<h1>Классификация</h1>
+<form action="/weka/classify" method="post">
+  <input type="text" name="input" placeholder="Введите данные">
+  <button type="submit">Классифицировать</button>
+</form>
+<p th:text="${result}"></p>
+</body>
+</html>

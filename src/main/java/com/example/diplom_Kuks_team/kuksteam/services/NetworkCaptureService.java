@@ -1,30 +1,38 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
-
+import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
+import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
-import org.pcap4j.packet.IpV4Packet;
-import org.pcap4j.packet.Packet;
-import org.pcap4j.packet.TcpPacket;
-import org.pcap4j.packet.UdpPacket;
+import org.pcap4j.packet.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 @Service
 public class NetworkCaptureService {
 
+    private static final int CAPTURE_DURATION = 30; // Время захвата в секундах
+    private static final Map<String, Integer> requestCounter = new HashMap<>();
+    private static final Map<String, Long> lastRequestTime = new HashMap<>();
+    @Autowired
+    TrafficRecordRepository trafficRecordRepository;
+
     @PostConstruct
     public void startCapture() {
-        capturePackets();
+        CompletableFuture.runAsync(this::capturePackets);
     }
 
     public void capturePackets() {
         try {
-            // Получаем список всех доступных сетевых интерфейсов
             List<PcapNetworkInterface> devices = Pcaps.findAllDevs();
 
             if (devices.isEmpty()) {
@@ -37,72 +45,113 @@ public class NetworkCaptureService {
                 System.out.println(i + ": " + devices.get(i).getName() + " - " + devices.get(i).getDescription());
             }
 
-            // Открываем CSV-файл для записи
             FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv");
-            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes\n");
+            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
 
-            // Обрабатываем каждый интерфейс
             for (PcapNetworkInterface device : devices) {
-                // Пропускаем Loopback-интерфейс
                 if (device.getName().contains("Loopback")) {
                     continue;
                 }
 
-                System.out.println("🔍 Пробуем использовать интерфейс: " + device.getName());
+                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card")) {
 
-                try (PcapHandle handle = device.openLive(65536, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, 10)) {
-                    System.out.println("✅ Захват начат на интерфейсе: " + device.getName());
 
-                    while (true) {  // Бесконечный цикл для захвата всех пакетов
-                        try {
-                            Packet packet = handle.getNextPacketEx();
+                    System.out.println("🔍 Пробуем использовать интерфейс: " + device.getName());
 
-                            if (packet.contains(IpV4Packet.class)) {
-                                IpV4Packet ipPacket = packet.get(IpV4Packet.class);
-                                String srcIp = ipPacket.getHeader().getSrcAddr().getHostAddress();
-                                String dstIp = ipPacket.getHeader().getDstAddr().getHostAddress();
-                                int length = packet.length();
-                                String protocol = "OTHER";
-                                int srcPort = 0, dstPort = 0;
+                    try (PcapHandle handle = device.openLive(65536, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, 10)) {
+                        System.out.println("✅ Захват начат на интерфейсе: " + device.getName());
 
-                                if (packet.contains(TcpPacket.class)) {
-                                    TcpPacket tcpPacket = packet.get(TcpPacket.class);
-                                    srcPort = tcpPacket.getHeader().getSrcPort().valueAsInt();
-                                    dstPort = tcpPacket.getHeader().getDstPort().valueAsInt();
-                                    protocol = "TCP";
-                                } else if (packet.contains(UdpPacket.class)) {
-                                    UdpPacket udpPacket = packet.get(UdpPacket.class);
-                                    srcPort = udpPacket.getHeader().getSrcPort().valueAsInt();
-                                    dstPort = udpPacket.getHeader().getDstPort().valueAsInt();
-                                    protocol = "UDP";
-                                }
+                        long startTime = System.currentTimeMillis();
 
-                                writer.append(srcIp).append(",")
-                                        .append(dstIp).append(",")
-                                        .append(String.valueOf(srcPort)).append(",")
-                                        .append(String.valueOf(dstPort)).append(",")
-                                        .append(protocol).append(",")
-                                        .append(String.valueOf(length)).append("\n");
-
-                                writer.flush();  // Записываем в файл сразу, чтобы избежать потерь
+                        while (System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
+                            try {
+                                Packet packet = handle.getNextPacketEx();
+                                processPacket(packet, writer);
+                            } catch (TimeoutException e) {
+                                System.out.println("⏳ Тайм-аут при ожидании пакета...");
                             }
-                        } catch (TimeoutException e) {
-                            System.out.println("⏳ Тайм-аут при ожидании пакета...");
                         }
-                    }
 
-                } catch (PcapNativeException | NotOpenException e) {
-                    System.out.println("⚠️ Ошибка при работе с " + device.getName() + ": " + e.getMessage());
+                    } catch (PcapNativeException | NotOpenException e) {
+                        System.out.println("⚠️ Ошибка при работе с " + device.getName() + ": " + e.getMessage());
+                    }
                 }
+
             }
+
 
             writer.close();
             System.out.println("✅ Данные записаны в live_traffic.csv");
 
-        } catch (IOException e) {
+        } catch (IOException | PcapNativeException e) {
             System.out.println("❌ Ошибка при записи в файл: " + e.getMessage());
-        } catch (PcapNativeException e) {
-            throw new RuntimeException(e);
         }
     }
+
+    private void processPacket(Packet packet, FileWriter writer) throws IOException {
+        if (packet.contains(IpV4Packet.class)) {
+
+
+//            List<TrafficRecord> trafficRecords = new ArrayList<>();
+            IpV4Packet ipPacket = packet.get(IpV4Packet.class);
+            String srcIp = ipPacket.getHeader().getSrcAddr().getHostAddress();
+            String dstIp = ipPacket.getHeader().getDstAddr().getHostAddress();
+            int length = packet.length();
+            String protocol = "OTHER";
+            int srcPort = 0, dstPort = 0;
+            String attackType = "NORMAL";
+
+            if (packet.contains(TcpPacket.class)) {
+                TcpPacket tcpPacket = packet.get(TcpPacket.class);
+                srcPort = tcpPacket.getHeader().getSrcPort().valueAsInt();
+                dstPort = tcpPacket.getHeader().getDstPort().valueAsInt();
+                protocol = "TCP";
+
+                // SYN Flood Detection
+                if (tcpPacket.getHeader().getSyn() && !tcpPacket.getHeader().getAck()) {
+                    attackType = "SYN_FLOOD";
+                }
+            } else if (packet.contains(UdpPacket.class)) {
+                UdpPacket udpPacket = packet.get(UdpPacket.class);
+                srcPort = udpPacket.getHeader().getSrcPort().valueAsInt();
+                dstPort = udpPacket.getHeader().getDstPort().valueAsInt();
+                protocol = "UDP";
+            }
+
+            // Port Scanning Detection (Multiple requests from same IP to different ports)
+            String ipPortKey = srcIp + ":" + dstPort;
+            requestCounter.put(ipPortKey, requestCounter.getOrDefault(ipPortKey, 0) + 1);
+            if (requestCounter.get(ipPortKey) > 10) {
+                attackType = "PORT_SCAN";
+            }
+
+            // DDoS / Brute-force Detection (High-frequency requests from same IP)
+            long currentTime = System.currentTimeMillis();
+            if (lastRequestTime.containsKey(srcIp) && (currentTime - lastRequestTime.get(srcIp)) < 100) {
+                attackType = "DDOS_OR_BRUTE_FORCE";
+            }
+            lastRequestTime.put(srcIp, currentTime);
+
+            // Unusual Packet Size Detection (Common for some exploits)
+            if (length > 1500) {
+                attackType = "MALFORMED_PACKET";
+            }
+            // 🚀 Записываем данные во временный список
+            TrafficRecord record = new TrafficRecord(null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now());
+            trafficRecordRepository.save(record);
+
+            // Write to CSV
+            writer.append(srcIp).append(",")
+                    .append(dstIp).append(",")
+                    .append(String.valueOf(srcPort)).append(",")
+                    .append(String.valueOf(dstPort)).append(",")
+                    .append(protocol).append(",")
+                    .append(String.valueOf(length)).append(",")
+                    .append(attackType).append("\n");
+
+            writer.flush();
+        }
+    }
+
+
 }

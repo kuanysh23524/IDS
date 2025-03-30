@@ -1,0 +1,42 @@
+package com.example.diplom_Kuks_team.kuksteam.models;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "traffic_records")
+public class TrafficRecord {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String srcIp;
+    private String dstIp;
+    private int srcPort;
+    private int dstPort;
+    private String protocol;
+    private int bytes;
+    private String attackType;
+    private LocalDateTime startTime;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.startTime == null) {
+            this.startTime = LocalDateTime.now();
+        }
+    }
+
+//    public TrafficRecord(Object o, String srcIp, String dstIp, int srcPort, int dstPort, String protocol, int length, String attackType) {
+//    }
+}

@@ -2,7 +2,10 @@ package com.example.diplom_Kuks_team.kuksteam.controllers;
 
 import com.example.diplom_Kuks_team.kuksteam.services.NetworkCaptureService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/network")
@@ -14,7 +17,7 @@ public class NetworkCaptureController {
         this.networkCaptureService = networkCaptureService;
     }
 
-    @PostMapping ("/capture")
+    @PostMapping("/capture")
     public String captureTraffic(@RequestParam(name = "adapterId") String name) {
         new Thread(() -> networkCaptureService.capturePackets()).start();
         return "🚀 Захват сетевого трафика запущен!";

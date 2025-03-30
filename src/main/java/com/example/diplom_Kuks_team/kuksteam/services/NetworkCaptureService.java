@@ -1,12 +1,14 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
-import com.example.diplom_Kuks_team.kuksteam.models.NetworkDevices;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
 import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
-import org.pcap4j.packet.*;
+import org.pcap4j.packet.IpV4Packet;
+import org.pcap4j.packet.Packet;
+import org.pcap4j.packet.TcpPacket;
+import org.pcap4j.packet.UdpPacket;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -29,6 +30,7 @@ public class NetworkCaptureService {
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
     NetworkDevicesRepository networkDevicesRepository;
+
     @PostConstruct
     public void startCapture() {
         CompletableFuture.runAsync(this::capturePackets);

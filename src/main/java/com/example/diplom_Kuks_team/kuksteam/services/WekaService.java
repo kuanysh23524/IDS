@@ -5,10 +5,11 @@ import org.springframework.web.multipart.MultipartFile;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 import weka.core.Instances;
-import weka.core.converters.CSVLoader;
 import weka.core.SerializationHelper;
+import weka.core.converters.CSVLoader;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 

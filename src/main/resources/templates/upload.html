@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Загрузка CSV</title>
+    <title>Загрузка CSV</title>
 </head>
 <body>
 <h1>Загрузка файла</h1>
 <form action="/weka/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file">
-  <button type="submit">Загрузить</button>
+    <input type="file" name="file">
+    <button type="submit">Загрузить</button>
 </form>
 <p th:text="${message}"></p>
 </body>

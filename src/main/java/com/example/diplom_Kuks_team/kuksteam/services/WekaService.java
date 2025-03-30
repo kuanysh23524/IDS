@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
+import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 import weka.core.converters.CSVLoader;
@@ -92,29 +94,45 @@ public class WekaService {
             if (!modelFile.exists()) {
                 return "❌ Ошибка: Файл модели не найден!";
             }
+
+            // Загрузка модели с использованием Weka SerializationHelper
             Classifier model = (Classifier) SerializationHelper.read(modelFile.getAbsolutePath());
 
-            // 🔹 Загружаем CSV с данными
+            // 🔹 Загружаем CSV с данными (чтобы получить структуру)
             CSVLoader loader = new CSVLoader();
             loader.setSource(new File(CSV_FILE_PATH));
             Instances dataset = loader.getDataSet();
-            dataset.setClassIndex(dataset.numAttributes() - 1);
+            dataset.setClassIndex(dataset.numAttributes() - 1); // Устанавливаем последний атрибут как класс
 
-            // 🔹 Создаём новый объект для классификации
-            Instances instance = new Instances(dataset, 1);
+            // 🔹 Разбираем входные данные
             String[] values = inputData.split(",");
-            double[] instanceValues = new double[dataset.numAttributes()];
-
-            for (int i = 0; i < values.length; i++) {
-                instanceValues[i] = Double.parseDouble(values[i]);
+            if (values.length != dataset.numAttributes() - 1) {
+                return "❌ Ошибка: Неверное количество параметров. Ожидалось " + (dataset.numAttributes() - 1);
             }
 
-            instance.add(dataset.firstInstance().copy(instanceValues));
-            double result = model.classifyInstance(instance.firstInstance());
+            // 🔹 Преобразуем входные данные в числовые значения
+            double[] instanceValues = new double[dataset.numAttributes()];
+            for (int i = 0; i < values.length; i++) { // Обрабатываем все атрибуты
+                if (dataset.attribute(i).isNumeric()) {
+                    // Если атрибут числовой, то парсим его как число
+                    instanceValues[i] = Double.parseDouble(values[i]);
+                } else {
+                    // Если атрибут категориальный, то получаем индекс значения
+                    instanceValues[i] = dataset.attribute(i).indexOfValue(values[i]);
+                }
+            }
 
-            return "✅ Классифицированный результат: " + dataset.classAttribute().value((int) result);
+            // 🔹 Создаём новый объект для классификации
+            Instance newInstance = new DenseInstance(1.0, instanceValues);
+            newInstance.setDataset(dataset); // Указываем, что он относится к датасету
+
+            // 🔹 Классифицируем новый объект
+            double result = model.classifyInstance(newInstance);
+            String predictedClass = dataset.classAttribute().value((int) result);
+
+            return "✅ Классифицированный результат: " + predictedClass;
         } catch (Exception e) {
+            // Обработка ошибок
             return "❌ Ошибка классификации: " + e.getMessage();
         }
-    }
-}
+    }}

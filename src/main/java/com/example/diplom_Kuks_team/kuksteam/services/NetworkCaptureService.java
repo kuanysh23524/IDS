@@ -1,6 +1,8 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
+import com.example.diplom_Kuks_team.kuksteam.models.NetworkDevices;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
+import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
@@ -14,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -25,7 +28,7 @@ public class NetworkCaptureService {
     private static final Map<String, Long> lastRequestTime = new HashMap<>();
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
-
+    NetworkDevicesRepository networkDevicesRepository;
     @PostConstruct
     public void startCapture() {
         CompletableFuture.runAsync(this::capturePackets);
@@ -44,6 +47,8 @@ public class NetworkCaptureService {
             for (int i = 0; i < devices.size(); i++) {
                 System.out.println(i + ": " + devices.get(i).getName() + " - " + devices.get(i).getDescription());
             }
+//            Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
+//            System.out.println(networkDevices.isPresent());
 
             FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv");
             writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
@@ -53,7 +58,11 @@ public class NetworkCaptureService {
                     continue;
                 }
 
-                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card")) {
+//                Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
+//
+                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card"))
+//                if (device.getDescription().equals(networkDevices.get().getDescription()))
+                {
 
 
                     System.out.println("🔍 Пробуем использовать интерфейс: " + device.getName());

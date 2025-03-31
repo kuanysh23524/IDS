@@ -24,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 @Service
 public class NetworkCaptureService {
 
-    private static final int CAPTURE_DURATION = 30; // Время захвата в секундах
+    private static final int CAPTURE_DURATION = 900; // Время захвата в секундах
     private static final Map<String, Integer> requestCounter = new HashMap<>();
     private static final Map<String, Long> lastRequestTime = new HashMap<>();
     @Autowired
@@ -52,8 +52,8 @@ public class NetworkCaptureService {
 //            Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
 //            System.out.println(networkDevices.isPresent());
 
-            FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv");
-            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
+            FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv", true);
+//            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
 
             for (PcapNetworkInterface device : devices) {
                 if (device.getName().contains("Loopback")) {

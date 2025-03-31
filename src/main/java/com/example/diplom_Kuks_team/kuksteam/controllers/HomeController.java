@@ -11,6 +11,7 @@ public class HomeController {
         model.addAttribute("message", "Добро пожаловать в IDS Detector!");
         return "index";
     }
+
     @GetMapping("/contact")
     public String home() {
         return "contact";

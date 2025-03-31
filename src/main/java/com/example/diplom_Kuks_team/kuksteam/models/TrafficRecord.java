@@ -35,6 +35,5 @@ public class TrafficRecord {
         }
     }
 
-//    public TrafficRecord(Object o, String srcIp, String dstIp, int srcPort, int dstPort, String protocol, int length, String attackType) {
-//    }
+
 }

@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 @RequestMapping("/weka")
@@ -20,23 +19,27 @@ public class WekaController {
         this.wekaService = wekaService;
     }
 
-    /**
-     * Страница загрузки CSV
-     */
-    @GetMapping("/upload")
-    public String uploadPage() {
-        return "upload";
-    }
 
-    /**
-     * Обработка загрузки CSV-файла
-     */
-    @PostMapping("/upload")
-    public String uploadFile(@RequestParam("file") MultipartFile file, Model model) {
-        String message = wekaService.uploadAndProcessCSV(file);
-        model.addAttribute("message", message);
-        return "upload";
-    }
+    // Убрал загрузку файла так как внес доработку ,
+    // теперь модель будет обучаться не по тем данным которые были в файле,
+    // а по умолчанию будет загружаться по трафику с этого компа с файла live_traffic
+//    /**
+//     * Страница загрузки CSV
+//     */
+////    @GetMapping("/upload")
+////    public String uploadPage() {
+////        return "upload";
+////    }
+//
+//    /**
+//     * Обработка загрузки CSV-файла
+//     */
+////    @PostMapping("/upload")
+////    public String uploadFile(@RequestParam("file") MultipartFile file, Model model) {
+////        String message = wekaService.uploadAndProcessCSV(file);
+////        model.addAttribute("message", message);
+////        return "upload";
+////    }
 
     /**
      * Страница обучения модели

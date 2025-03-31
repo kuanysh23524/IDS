@@ -1,7 +1,6 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 import weka.core.DenseInstance;
@@ -11,44 +10,42 @@ import weka.core.SerializationHelper;
 import weka.core.converters.CSVLoader;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.List;
 
 @Service
 public class WekaService {
+    //    private static final String CSV_FILE_PATH = DATA_DIR + "/data.csv";
 
     private static final String DATA_DIR = "src/main/resources/data";
-    private static final String CSV_FILE_PATH = DATA_DIR + "/data.csv";
     private static final String MODEL_FILE_PATH = DATA_DIR + "/model.model";
+    private static final String LIVE_TFAFFIC_FOR_TRAINING = "src/main/resources/data/live_traffic.csv";
 
-    public String uploadAndProcessCSV(MultipartFile file) {
-        try {
-            String resourcePath = new File("src/main/resources/data").getAbsolutePath();
-            File directory = new File(resourcePath);
-            if (!directory.exists()) {
-                directory.mkdirs(); // Создаём папку, если её нет
-            }
-
-            // 📄 Сохраняем CSV
-            File csvFile = new File(directory, "data.csv");
-            file.transferTo(csvFile);
-
-            // 🔎 Проверяем содержимое файла
-            List<String> lines = Files.readAllLines(csvFile.toPath());
-            if (lines.isEmpty()) {
-                return "❌ Ошибка: Загруженный CSV-файл пустой!";
-            }
-
-            return "✅ Файл успешно загружен в " + csvFile.getAbsolutePath();
-        } catch (IOException e) {
-            return "❌ Ошибка загрузки файла: " + e.getMessage();
-        }
-    }
+//    public String uploadAndProcessCSV(MultipartFile file) {
+//        try {
+//            String resourcePath = new File("src/main/resources/data").getAbsolutePath();
+//            File directory = new File(resourcePath);
+//            if (!directory.exists()) {
+//                directory.mkdirs(); // Создаём папку, если её нет
+//            }
+//
+//            // 📄 Сохраняем CSV
+//            File csvFile = new File(directory, "data.csv");
+//            file.transferTo(csvFile);
+//
+//            // 🔎 Проверяем содержимое файла
+//            List<String> lines = Files.readAllLines(csvFile.toPath());
+//            if (lines.isEmpty()) {
+//                return "❌ Ошибка: Загруженный CSV-файл пустой!";
+//            }
+//
+//            return "✅ Файл успешно загружен в " + csvFile.getAbsolutePath();
+//        } catch (IOException e) {
+//            return "❌ Ошибка загрузки файла: " + e.getMessage();
+//        }
+//    }
 
     public String trainModel() {
         try {
-            File csvFile = new File(CSV_FILE_PATH);
+            File csvFile = new File(LIVE_TFAFFIC_FOR_TRAINING);
 
             // 🔹 Проверка: существует ли файл
             if (!csvFile.exists()) {
@@ -100,7 +97,8 @@ public class WekaService {
 
             // 🔹 Загружаем CSV с данными (чтобы получить структуру)
             CSVLoader loader = new CSVLoader();
-            loader.setSource(new File(CSV_FILE_PATH));
+//            loader.setSource(new File(CSV_FILE_PATH));
+            loader.setSource(new File(LIVE_TFAFFIC_FOR_TRAINING));
             Instances dataset = loader.getDataSet();
             dataset.setClassIndex(dataset.numAttributes() - 1); // Устанавливаем последний атрибут как класс
 
@@ -135,4 +133,5 @@ public class WekaService {
             // Обработка ошибок
             return "❌ Ошибка классификации: " + e.getMessage();
         }
-    }}
+    }
+}

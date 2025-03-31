@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface NetworkDevicesRepository extends JpaRepository<NetworkDevices, Integer> {
     Optional<NetworkDevices> findByName(String name);
+
     Optional<NetworkDevices> findById(Long id);
 }

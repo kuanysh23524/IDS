@@ -3,7 +3,6 @@ package com.example.diplom_Kuks_team.kuksteam.services;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
 import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
-import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
@@ -29,11 +28,35 @@ public class NetworkCaptureService {
     private static final Map<String, Long> lastRequestTime = new HashMap<>();
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
-    NetworkDevicesRepository networkDevicesRepository;
 
-    @PostConstruct
+
+//    @PostConstruct
+//    public void startCapture() {
+//        CompletableFuture.runAsync(this::capturePackets);
+//    }
+
+
+    private volatile boolean capturing = false;
+
     public void startCapture() {
-        CompletableFuture.runAsync(this::capturePackets);
+        if (capturing) {
+            return;  // Если захват уже идет, ничего не делаем
+        }
+
+        capturing = true;  // Устанавливаем флаг захвата в true
+
+        // Проверка, что флаг захвата действительно true
+        if (capturing == true) {
+            CompletableFuture.runAsync(this::capturePackets);  // Запускаем захват пакетов асинхронно
+        } else {
+            // В случае ошибок можно добавить логику здесь, но лучше в таких случаях сразу возвращать
+            // ничего не нужно, так как метод не должен ничего возвращать (void).
+        }
+    }
+
+    public void stopCapture() {
+        capturing = false;
+
     }
 
     public void capturePackets() {
@@ -74,7 +97,7 @@ public class NetworkCaptureService {
 
                         long startTime = System.currentTimeMillis();
 
-                        while (System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
+                        while (capturing && System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
                             try {
                                 Packet packet = handle.getNextPacketEx();
                                 processPacket(packet, writer);

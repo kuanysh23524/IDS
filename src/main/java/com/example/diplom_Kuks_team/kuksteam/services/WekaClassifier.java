@@ -22,6 +22,16 @@ public class WekaClassifier {
             System.out.println("Instance " + i + " -> Class: " + data.classAttribute().value((int) label));
         }
 
+
+
+
+
+
+
+
+
+
+
         System.out.println("l222222");
 
     }

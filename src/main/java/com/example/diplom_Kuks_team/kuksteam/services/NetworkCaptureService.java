@@ -1,12 +1,13 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
-import com.example.diplom_Kuks_team.kuksteam.models.NetworkDevices;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
 import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
-import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
-import org.pcap4j.packet.*;
+import org.pcap4j.packet.IpV4Packet;
+import org.pcap4j.packet.Packet;
+import org.pcap4j.packet.TcpPacket;
+import org.pcap4j.packet.UdpPacket;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,22 +17,46 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 @Service
 public class NetworkCaptureService {
 
-    private static final int CAPTURE_DURATION = 30; // Время захвата в секундах
+    private static final int CAPTURE_DURATION = 900; // Время захвата в секундах
     private static final Map<String, Integer> requestCounter = new HashMap<>();
     private static final Map<String, Long> lastRequestTime = new HashMap<>();
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
-    NetworkDevicesRepository networkDevicesRepository;
-    @PostConstruct
+
+
+//    @PostConstruct
+//    public void startCapture() {
+//        CompletableFuture.runAsync(this::capturePackets);
+//    }
+
+
+    private volatile boolean capturing = false;
+
     public void startCapture() {
-        CompletableFuture.runAsync(this::capturePackets);
+        if (capturing) {
+            return;  // Если захват уже идет, ничего не делаем
+        }
+
+        capturing = true;  // Устанавливаем флаг захвата в true
+
+        // Проверка, что флаг захвата действительно true
+        if (capturing == true) {
+            CompletableFuture.runAsync(this::capturePackets);  // Запускаем захват пакетов асинхронно
+        } else {
+            // В случае ошибок можно добавить логику здесь, но лучше в таких случаях сразу возвращать
+            // ничего не нужно, так как метод не должен ничего возвращать (void).
+        }
+    }
+
+    public void stopCapture() {
+        capturing = false;
+
     }
 
     public void capturePackets() {
@@ -50,8 +75,8 @@ public class NetworkCaptureService {
 //            Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
 //            System.out.println(networkDevices.isPresent());
 
-            FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv");
-            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
+            FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv", true);
+//            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
 
             for (PcapNetworkInterface device : devices) {
                 if (device.getName().contains("Loopback")) {
@@ -72,7 +97,7 @@ public class NetworkCaptureService {
 
                         long startTime = System.currentTimeMillis();
 
-                        while (System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
+                        while (capturing && System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
                             try {
                                 Packet packet = handle.getNextPacketEx();
                                 processPacket(packet, writer);

@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +35,5 @@ public class TrafficRecord {
         }
     }
 
-//    public TrafficRecord(Object o, String srcIp, String dstIp, int srcPort, int dstPort, String protocol, int length, String attackType) {
-//    }
+
 }

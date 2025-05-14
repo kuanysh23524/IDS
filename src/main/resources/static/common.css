@@ -1,0 +1,35 @@
+/* common.css */
+:root {
+    --bg-color-light: #ffffff;
+    --text-color-light: #000000;
+    --bg-color-dark: #1e1e1e;
+    --text-color-dark: #ffffff;
+}
+
+body.light-theme {
+    background-color: var(--bg-color-light);
+    color: var(--text-color-light);
+}
+
+body.dark-theme {
+    background-color: var(--bg-color-dark);
+    color: var(--text-color-dark);
+}
+
+.table-light {
+    background-color: #f8f9fa;
+}
+
+.table-dark {
+    background-color: #343a40;
+    color: white;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 2s ease-in-out;
+}

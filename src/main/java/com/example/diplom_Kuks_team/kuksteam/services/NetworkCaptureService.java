@@ -1,7 +1,6 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
-import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;

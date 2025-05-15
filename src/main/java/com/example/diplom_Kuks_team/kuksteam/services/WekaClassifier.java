@@ -24,7 +24,11 @@ public class WekaClassifier {
 
 
         System.out.println("detached");
-    }
 
+        System.out.println("Actual");
+
+
+
+    }
 }
 

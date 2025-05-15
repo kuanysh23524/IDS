@@ -133,21 +133,106 @@
 <button class="btn btn-secondary my-3" onclick="toggleTheme()">Переключить тему</button>
 <a href="/weka/classify" class="btn btn-success">Classify</a>
 
-<table id="trafficTable" class="table table-sm table-light table-hover">
-    <tr th:each="trafficRecords1:${trafficRecords}"
-        th:classappend="${trafficRecords1.attackType == 'DDOS_OR_BRUTE_FORCE'} ? 'table-danger' : ${trafficRecords1.attackType=='NORMAL'?'table-success' :''}"
-    >
 
-        <td th:text="${trafficRecords1.getId()}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.srcIp}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.dstIp}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.srcPort}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.dstPort}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.protocol}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.bytes}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.attackType}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
-        <td th:text="${trafficRecords1.startTime}" th:style="${trafficRecords1.getAttackType()=='DDOS_OR_BRUTE_FORCE'}?'color:red':'color:black'"></td>
+<!-- Start Capture button -->
+<form action="/start-capture" method="post" class="btn btn-secondary my-3">
+    <button type="submit" class="btn btn-success w-100">Start Capture</button>
+</form>
+
+<!-- Stop Capture button -->
+<form action="/stop-capture" method="post" class="btn btn-secondary my-3">
+    <button type="submit" class="btn btn-danger w-100">Stop</button>
+</form>
+
+
+<table id="trafficTable" class="table table-sm table-light table-hover">
+    <tr th:each="trafficRecords1:${trafficRecords}">
+        <thead class="table-dark">
+    <tr>
+        <th>ID</th>
+        <th>Source IP</th>
+        <th>Destination IP</th>
+        <th>Source Port</th>
+        <th>Destination Port</th>
+        <th>Protocol</th>
+        <th>Bytes</th>
+        <th>Attack Type</th>
+        <th>Time</th>
     </tr>
+    </thead>
+    <tbody>
+    <th:block th:each="trafficRecords1 : ${trafficRecords}" th:switch="${trafficRecords1.attackType}">
+        <tr th:case="'DDOS_OR_BRUTE_FORCE'" class="table-danger">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="'PORT_SCAN'" class="table-warning">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="'SYN_FLOOD'" class="table-info">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="'MALFORMED_PACKET'" class="table-secondary">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="'NULL_PACKET'" class="table-primary">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="'NORMAL'" class="table-success">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="*">
+            <td colspan="10">Неизвестный тип атаки</td>
+        </tr>
+    </th:block>
 </table>
+
 </body>
 </html>

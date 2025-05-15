@@ -1,9 +1,7 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
-import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
-import jakarta.annotation.PostConstruct;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.Packet;
@@ -15,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,11 +28,35 @@ public class NetworkCaptureService {
     private static final Map<String, Long> lastRequestTime = new HashMap<>();
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
-    NetworkDevicesRepository networkDevicesRepository;
 
-    @PostConstruct
+
+//    @PostConstruct
+//    public void startCapture() {
+//        CompletableFuture.runAsync(this::capturePackets);
+//    }
+
+
+    private volatile boolean capturing = false;
+
     public void startCapture() {
-        CompletableFuture.runAsync(this::capturePackets);
+        if (capturing) {
+            return;  // Если захват уже идет, ничего не делаем
+        }
+
+        capturing = true;  // Устанавливаем флаг захвата в true
+
+        // Проверка, что флаг захвата действительно true
+        if (capturing == true) {
+            CompletableFuture.runAsync(this::capturePackets);  // Запускаем захват пакетов асинхронно
+        } else {
+            // В случае ошибок можно добавить логику здесь, но лучше в таких случаях сразу возвращать
+            // ничего не нужно, так как метод не должен ничего возвращать (void).
+        }
+    }
+
+    public void stopCapture() {
+        capturing = false;
+
     }
 
     public void capturePackets() {
@@ -74,7 +97,7 @@ public class NetworkCaptureService {
 
                         long startTime = System.currentTimeMillis();
 
-                        while (System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
+                        while (capturing && System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
                             try {
                                 Packet packet = handle.getNextPacketEx();
                                 processPacket(packet, writer);
@@ -99,69 +122,98 @@ public class NetworkCaptureService {
         }
     }
 
+
+
+   // Method scanning attacks--------------------------------------------------------------------------
+
+    private static final int PORT_SCAN_THRESHOLD = 7;
+    private static final int PACKET_SIZE_THRESHOLD = 1400;
+
+    private static final int DDOS_REQUEST_COUNT = 5;        // количество быстрых запросов
+    private static final int DDOS_INTERVAL_MS = 1000;       // в течение 1 секунды
+
+    // Глобальные счётчики
+//    private final Map<String, Integer> requestCounter = new HashMap<>();
+    private final Map<String, List<Long>> recentRequests = new HashMap<>();
+
     private void processPacket(Packet packet, FileWriter writer) throws IOException {
-        if (packet.contains(IpV4Packet.class)) {
+        if (!packet.contains(IpV4Packet.class)) return;
 
+        IpV4Packet ipPacket = packet.get(IpV4Packet.class);
+        String srcIp = ipPacket.getHeader().getSrcAddr().getHostAddress();
+        String dstIp = ipPacket.getHeader().getDstAddr().getHostAddress();
+        int length = packet.length();
+        String protocol = "OTHER";
+        int srcPort = 0, dstPort = 0;
+        String attackType = "NORMAL";
 
-//            List<TrafficRecord> trafficRecords = new ArrayList<>();
-            IpV4Packet ipPacket = packet.get(IpV4Packet.class);
-            String srcIp = ipPacket.getHeader().getSrcAddr().getHostAddress();
-            String dstIp = ipPacket.getHeader().getDstAddr().getHostAddress();
-            int length = packet.length();
-            String protocol = "OTHER";
-            int srcPort = 0, dstPort = 0;
-            String attackType = "NORMAL";
+        // Определение протокола и портов
+        if (packet.contains(TcpPacket.class)) {
+            TcpPacket tcpPacket = packet.get(TcpPacket.class);
+            srcPort = tcpPacket.getHeader().getSrcPort().valueAsInt();
+            dstPort = tcpPacket.getHeader().getDstPort().valueAsInt();
+            protocol = "TCP";
 
-            if (packet.contains(TcpPacket.class)) {
-                TcpPacket tcpPacket = packet.get(TcpPacket.class);
-                srcPort = tcpPacket.getHeader().getSrcPort().valueAsInt();
-                dstPort = tcpPacket.getHeader().getDstPort().valueAsInt();
-                protocol = "TCP";
-
-                // SYN Flood Detection
-                if (tcpPacket.getHeader().getSyn() && !tcpPacket.getHeader().getAck()) {
-                    attackType = "SYN_FLOOD";
-                }
-            } else if (packet.contains(UdpPacket.class)) {
-                UdpPacket udpPacket = packet.get(UdpPacket.class);
-                srcPort = udpPacket.getHeader().getSrcPort().valueAsInt();
-                dstPort = udpPacket.getHeader().getDstPort().valueAsInt();
-                protocol = "UDP";
+            // SYN Flood Detection
+            if (tcpPacket.getHeader().getSyn() && !tcpPacket.getHeader().getAck()) {
+                attackType = "SYN_FLOOD";
             }
 
-            // Port Scanning Detection (Multiple requests from same IP to different ports)
-            String ipPortKey = srcIp + ":" + dstPort;
-            requestCounter.put(ipPortKey, requestCounter.getOrDefault(ipPortKey, 0) + 1);
-            if (requestCounter.get(ipPortKey) > 10) {
-                attackType = "PORT_SCAN";
+            // NULL Packet Detection
+            if (!tcpPacket.getHeader().getSyn() &&
+                    !tcpPacket.getHeader().getAck() &&
+                    !tcpPacket.getHeader().getFin() &&
+                    !tcpPacket.getHeader().getRst() &&
+                    !tcpPacket.getHeader().getPsh() &&
+                    !tcpPacket.getHeader().getUrg()) {
+                attackType = "NULL_PACKET";
             }
 
-            // DDoS / Brute-force Detection (High-frequency requests from same IP)
+        } else if (packet.contains(UdpPacket.class)) {
+            UdpPacket udpPacket = packet.get(UdpPacket.class);
+            srcPort = udpPacket.getHeader().getSrcPort().valueAsInt();
+            dstPort = udpPacket.getHeader().getDstPort().valueAsInt();
+            protocol = "UDP";
+        }
+
+        // Port Scan Detection
+        String ipPortKey = srcIp + ":" + dstPort;
+        requestCounter.put(ipPortKey, requestCounter.getOrDefault(ipPortKey, 0) + 1);
+        if (requestCounter.get(ipPortKey) > PORT_SCAN_THRESHOLD) {
+            attackType = "PORT_SCAN";
+        }
+
+        // DDoS / Brute-force Detection (мягче)
+        // Только для исходящего трафика (наша сеть, например 10.x.x.x)
+        if (srcIp.startsWith("10.")) {
             long currentTime = System.currentTimeMillis();
-            if (lastRequestTime.containsKey(srcIp) && (currentTime - lastRequestTime.get(srcIp)) < 100) {
+            List<Long> times = recentRequests.getOrDefault(srcIp, new ArrayList<>());
+            times.add(currentTime);
+            times.removeIf(t -> currentTime - t > DDOS_INTERVAL_MS);
+            recentRequests.put(srcIp, times);
+
+            if (times.size() >= DDOS_REQUEST_COUNT) {
                 attackType = "DDOS_OR_BRUTE_FORCE";
             }
-            lastRequestTime.put(srcIp, currentTime);
-
-            // Unusual Packet Size Detection (Common for some exploits)
-            if (length > 1500) {
-                attackType = "MALFORMED_PACKET";
-            }
-            // 🚀 Записываем данные во временный список
-            TrafficRecord record = new TrafficRecord(null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now());
-            trafficRecordRepository.save(record);
-
-            // Write to CSV
-            writer.append(srcIp).append(",")
-                    .append(dstIp).append(",")
-                    .append(String.valueOf(srcPort)).append(",")
-                    .append(String.valueOf(dstPort)).append(",")
-                    .append(protocol).append(",")
-                    .append(String.valueOf(length)).append(",")
-                    .append(attackType).append("\n");
-
-            writer.flush();
         }
+
+        // Malformed Packet Detection (очень большой пакет, не фрагментированный)
+        if (length > PACKET_SIZE_THRESHOLD && !ipPacket.getHeader().getMoreFragmentFlag()) {
+            attackType = "MALFORMED_PACKET";
+        }
+
+        // Запись в базу данных
+        TrafficRecord record = new TrafficRecord(
+                null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now()
+        );
+        trafficRecordRepository.save(record);
+
+        // Запись в CSV
+        writer.append(String.join(",", srcIp, dstIp,
+                        String.valueOf(srcPort), String.valueOf(dstPort),
+                        protocol, String.valueOf(length), attackType))
+                .append("\n");
+        writer.flush();
     }
 
 

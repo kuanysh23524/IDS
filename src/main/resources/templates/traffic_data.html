@@ -161,6 +161,7 @@
     </tr>
     </thead>
     <tbody>
+
     <th:block th:each="trafficRecords1 : ${trafficRecords}" th:switch="${trafficRecords1.attackType}">
         <tr th:case="'DDOS_OR_BRUTE_FORCE'" class="table-danger">
             <td th:text="${trafficRecords1.id}"></td>

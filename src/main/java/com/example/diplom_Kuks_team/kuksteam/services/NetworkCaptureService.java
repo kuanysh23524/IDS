@@ -1,5 +1,6 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
+import com.example.diplom_Kuks_team.kuksteam.enums.AttackTypes;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import org.pcap4j.core.*;
@@ -129,12 +130,23 @@ public class NetworkCaptureService {
     private static final int PORT_SCAN_THRESHOLD = 7;
     private static final int PACKET_SIZE_THRESHOLD = 1400;
 
-    private static final int DDOS_REQUEST_COUNT = 5;        // количество быстрых запросов
-    private static final int DDOS_INTERVAL_MS = 1000;       // в течение 1 секунды
+    private static final int DDOS_REQUEST_COUNT = 5;
+    private static final int DDOS_INTERVAL_MS = 1000;
 
-    // Глобальные счётчики
+    private static final int DDOS_REQUEST_COUNT_TOTAL = 200;
+    private static final int DDOS_LONG_INTERVAL_MS = 3000;
+    private static final int DDOS_UNIQUE_IP_THRESHOLD = 30;
+
+    // Для Port Scan
 //    private final Map<String, Integer> requestCounter = new HashMap<>();
+
+    // Для простого DDoS (от одного IP)
     private final Map<String, List<Long>> recentRequests = new HashMap<>();
+
+    // Для продвинутого DDoS (по dstIp)
+    private final Map<String, List<Long>> incomingTrafficTimestamps = new HashMap<>();
+    private final Map<String, Map<String, List<Long>>> ddosMap = new HashMap<>();
+    // Типы атак
 
     private void processPacket(Packet packet, FileWriter writer) throws IOException {
         if (!packet.contains(IpV4Packet.class)) return;
@@ -145,28 +157,28 @@ public class NetworkCaptureService {
         int length = packet.length();
         String protocol = "OTHER";
         int srcPort = 0, dstPort = 0;
-        String attackType = "NORMAL";
+        String attackType = AttackTypes.NORMAL.name();
 
-        // Определение протокола и портов
+        // Протоколы и порты
         if (packet.contains(TcpPacket.class)) {
             TcpPacket tcpPacket = packet.get(TcpPacket.class);
             srcPort = tcpPacket.getHeader().getSrcPort().valueAsInt();
             dstPort = tcpPacket.getHeader().getDstPort().valueAsInt();
             protocol = "TCP";
 
-            // SYN Flood Detection
+            // SYN Flood
             if (tcpPacket.getHeader().getSyn() && !tcpPacket.getHeader().getAck()) {
-                attackType = "SYN_FLOOD";
+                attackType = AttackTypes.SYN_FLOOD.name();
             }
 
-            // NULL Packet Detection
+            // NULL Packet
             if (!tcpPacket.getHeader().getSyn() &&
                     !tcpPacket.getHeader().getAck() &&
                     !tcpPacket.getHeader().getFin() &&
                     !tcpPacket.getHeader().getRst() &&
                     !tcpPacket.getHeader().getPsh() &&
                     !tcpPacket.getHeader().getUrg()) {
-                attackType = "NULL_PACKET";
+                attackType = AttackTypes.NULL_PACKET.name();
             }
 
         } else if (packet.contains(UdpPacket.class)) {
@@ -180,11 +192,10 @@ public class NetworkCaptureService {
         String ipPortKey = srcIp + ":" + dstPort;
         requestCounter.put(ipPortKey, requestCounter.getOrDefault(ipPortKey, 0) + 1);
         if (requestCounter.get(ipPortKey) > PORT_SCAN_THRESHOLD) {
-            attackType = "PORT_SCAN";
+            attackType = AttackTypes.PORT_SCAN.name();
         }
 
-        // DDoS / Brute-force Detection (мягче)
-        // Только для исходящего трафика (наша сеть, например 10.x.x.x)
+        // DDoS / Brute-force Detection от одного IP (локального)
         if (srcIp.startsWith("10.")) {
             long currentTime = System.currentTimeMillis();
             List<Long> times = recentRequests.getOrDefault(srcIp, new ArrayList<>());
@@ -193,13 +204,42 @@ public class NetworkCaptureService {
             recentRequests.put(srcIp, times);
 
             if (times.size() >= DDOS_REQUEST_COUNT) {
-                attackType = "DDOS_OR_BRUTE_FORCE";
+                attackType = AttackTypes.DDOS_OR_BRUTE_FORCE.name();
             }
         }
 
-        // Malformed Packet Detection (очень большой пакет, не фрагментированный)
+        // Malformed Packet Detection
         if (length > PACKET_SIZE_THRESHOLD && !ipPacket.getHeader().getMoreFragmentFlag()) {
-            attackType = "MALFORMED_PACKET";
+            attackType = AttackTypes.MALFORMED_PACKET.name();
+        }
+
+        // === Улучшенное DDoS Detection ===
+        long currentTime = System.currentTimeMillis();
+
+        // Подсчет общего количества пакетов на dstIp за интервал
+        List<Long> timestamps = incomingTrafficTimestamps.getOrDefault(dstIp, new ArrayList<>());
+        timestamps.add(currentTime);
+        timestamps.removeIf(t -> currentTime - t > DDOS_LONG_INTERVAL_MS);
+        incomingTrafficTimestamps.put(dstIp, timestamps);
+
+        if (timestamps.size() >= DDOS_REQUEST_COUNT_TOTAL) {
+            attackType = AttackTypes.DDOS_OR_BRUTE_FORCE.name();
+        }
+
+        // Подсчет количества уникальных атакующих IP для одного dstIp
+        Map<String, List<Long>> srcMap = ddosMap.getOrDefault(dstIp, new HashMap<>());
+        List<Long> timeList = srcMap.getOrDefault(srcIp, new ArrayList<>());
+        timeList.add(currentTime);
+        timeList.removeIf(t -> currentTime - t > DDOS_LONG_INTERVAL_MS);
+        srcMap.put(srcIp, timeList);
+        ddosMap.put(dstIp, srcMap);
+
+        long activeAttackers = srcMap.values().stream()
+                .filter(list -> list.size() > 1)
+                .count();
+
+        if (activeAttackers >= DDOS_UNIQUE_IP_THRESHOLD) {
+            attackType = AttackTypes.DDOS_FROM_MULTIPLE_SOURCES.name();
         }
 
         // Запись в базу данных
@@ -215,6 +255,7 @@ public class NetworkCaptureService {
                 .append("\n");
         writer.flush();
     }
+
 
 
 }

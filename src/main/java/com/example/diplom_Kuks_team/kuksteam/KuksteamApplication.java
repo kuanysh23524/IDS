@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class KuksteamApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(KuksteamApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(KuksteamApplication.class, args);
+    }
 
 }

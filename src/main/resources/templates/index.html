@@ -71,9 +71,15 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
         h1 {
@@ -113,8 +119,12 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
 
         section {
@@ -144,9 +154,9 @@
 
     <!-- Кнопки -->
     <div class="row mt-4">
-<!--        <div class="col-md-3 mb-3">-->
-<!--            <a href="/weka/upload" class="btn btn-custom w-100"><i class="fas fa-upload"></i> Загрузить CSV</a>-->
-<!--        </div>-->
+        <!--        <div class="col-md-3 mb-3">-->
+        <!--            <a href="/weka/upload" class="btn btn-custom w-100"><i class="fas fa-upload"></i> Загрузить CSV</a>-->
+        <!--        </div>-->
         <div class="col-md-3 mb-3">
             <a href="/weka/train" class="btn btn-custom w-100"><i class="fas fa-graduation-cap"></i> Обучить</a>
         </div>
@@ -154,7 +164,8 @@
             <a href="/weka/classify" class="btn btn-custom w-100"><i class="fas fa-search"></i> Классифицировать</a>
         </div>
         <div class="col-md-3 mb-3">
-            <a href="/attacks/traffic_data" class="btn btn-custom w-100"><i class="fas fa-exclamation-triangle"></i> Атаки и трафик</a>
+            <a href="/attacks/traffic_data" class="btn btn-custom w-100"><i class="fas fa-exclamation-triangle"></i>
+                Атаки и трафик</a>
         </div>
     </div>
 
@@ -166,7 +177,11 @@
 
     <!-- Видео -->
     <div class="video-container">
-        <iframe class="centered-video" src="https://www.youtube.com/embed/-gSfDUwO1gM?autoplay=1&si=iUxaEsqhWsR0_WLq&start=24" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <iframe class="centered-video"
+                src="https://www.youtube.com/embed/-gSfDUwO1gM?autoplay=1&si=iUxaEsqhWsR0_WLq&start=24"
+                title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
     </div>
 </div>
 

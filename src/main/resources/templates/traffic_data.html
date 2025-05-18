@@ -117,16 +117,17 @@
 </div>
 
 <!-- Контент страницы -->
-<form  action="/start-capture" method="post" class="p-4 border rounded shadow bg-light">
+<form action="/start-capture" method="post" class="p-4 border rounded shadow bg-light">
     <div class="mb-3" style="margin-top: 40px">
         <label class="form-label fw-bold" style="font-size: 15px">Выберите сетевой адаптер:</label>
-        <select name="description" class="form-select form-select-lg">
+        <select name="id" class="form-select form-select-lg">
             <option disabled selected>Выберите устройство...</option>
             <option th:each="networkDevice : ${networkDevices111}"
-                    th:value="${networkDevice.getDescription()}"
-                    th:text="${networkDevice.getDescription()}">
+                    th:value="${networkDevice.id}"
+                    th:text="${networkDevice.description}">
             </option>
         </select>
+
     </div>
     <button type="submit" class="btn btn-primary w-100">Выбрать</button>
 </form>

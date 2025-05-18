@@ -35,5 +35,8 @@ public class TrafficRecord {
         }
     }
 
+    @ManyToOne
+    private NetworkDevices networkDevices;
+
 
 }

@@ -44,7 +44,9 @@ public class NetworkCaptureService {
     public void startCapture(NetworkDevices networkDevices) {
         capturing = true;
         if (capturing) {
-        CompletableFuture.runAsync(() -> {capturePackets(networkDevices);});
+            CompletableFuture.runAsync(() -> {
+                capturePackets(networkDevices);
+            });
         }
     }
 
@@ -80,8 +82,7 @@ public class NetworkCaptureService {
 //                Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
 //
 //                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card"))
-                if (device.getDescription().contains(String.valueOf(deviceToChoose.getDescription())))
-                {
+                if (device.getDescription().contains(String.valueOf(deviceToChoose.getDescription()))) {
 
 
                     System.out.println("🔍 Пробуем использовать интерфейс: " + device.getName());
@@ -94,7 +95,7 @@ public class NetworkCaptureService {
                         while (capturing && System.currentTimeMillis() - startTime < CAPTURE_DURATION * 1000) {
                             try {
                                 Packet packet = handle.getNextPacketEx();
-                                processPacket(packet, writer);
+                                processPacket(packet, writer, deviceToChoose);
                             } catch (TimeoutException e) {
                                 System.out.println("⏳ Тайм-аут при ожидании пакета...");
                             }
@@ -117,8 +118,7 @@ public class NetworkCaptureService {
     }
 
 
-
-   // Method scanning attacks--------------------------------------------------------------------------
+    // Method scanning attacks--------------------------------------------------------------------------
 
     private static final int PORT_SCAN_THRESHOLD = 7;
     private static final int PACKET_SIZE_THRESHOLD = 1400;
@@ -141,7 +141,7 @@ public class NetworkCaptureService {
     private final Map<String, Map<String, List<Long>>> ddosMap = new HashMap<>();
     // Типы атак
 
-    private void processPacket(Packet packet, FileWriter writer) throws IOException {
+    private void processPacket(Packet packet, FileWriter writer, NetworkDevices networkDevices) throws IOException {
         if (!packet.contains(IpV4Packet.class)) return;
 
         IpV4Packet ipPacket = packet.get(IpV4Packet.class);
@@ -237,9 +237,10 @@ public class NetworkCaptureService {
 
         // Запись в базу данных
         TrafficRecord record = new TrafficRecord(
-                null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now()
+                null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now(), networkDevices
         );
         trafficRecordRepository.save(record);
+
 
         // Запись в CSV
         writer.append(String.join(",", srcIp, dstIp,
@@ -248,7 +249,6 @@ public class NetworkCaptureService {
                 .append("\n");
         writer.flush();
     }
-
 
 
 }

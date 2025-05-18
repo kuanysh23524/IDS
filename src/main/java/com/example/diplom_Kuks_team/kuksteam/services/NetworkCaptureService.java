@@ -1,6 +1,7 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
 import com.example.diplom_Kuks_team.kuksteam.enums.AttackTypes;
+import com.example.diplom_Kuks_team.kuksteam.models.NetworkDevices;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import org.pcap4j.core.*;
@@ -29,6 +30,7 @@ public class NetworkCaptureService {
     private static final Map<String, Long> lastRequestTime = new HashMap<>();
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
+    SearchNetworkDevicesService searchNetworkDevicesService;
 
 
 //    @PostConstruct
@@ -39,19 +41,10 @@ public class NetworkCaptureService {
 
     private volatile boolean capturing = false;
 
-    public void startCapture() {
+    public void startCapture(NetworkDevices networkDevices) {
+        capturing = true;
         if (capturing) {
-            return;  // Если захват уже идет, ничего не делаем
-        }
-
-        capturing = true;  // Устанавливаем флаг захвата в true
-
-        // Проверка, что флаг захвата действительно true
-        if (capturing == true) {
-            CompletableFuture.runAsync(this::capturePackets);  // Запускаем захват пакетов асинхронно
-        } else {
-            // В случае ошибок можно добавить логику здесь, но лучше в таких случаях сразу возвращать
-            // ничего не нужно, так как метод не должен ничего возвращать (void).
+        CompletableFuture.runAsync(() -> {capturePackets(networkDevices);});
         }
     }
 
@@ -60,7 +53,7 @@ public class NetworkCaptureService {
 
     }
 
-    public void capturePackets() {
+    public void capturePackets(NetworkDevices deviceToChoose) {
         try {
             List<PcapNetworkInterface> devices = Pcaps.findAllDevs();
 
@@ -86,8 +79,8 @@ public class NetworkCaptureService {
 
 //                Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
 //
-                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card"))
-//                if (device.getDescription().equals(networkDevices.get().getDescription()))
+//                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card"))
+                if (device.getDescription().contains(String.valueOf(deviceToChoose.getDescription())))
                 {
 
 

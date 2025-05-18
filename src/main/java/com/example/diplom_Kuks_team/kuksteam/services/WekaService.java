@@ -1,5 +1,6 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
@@ -43,6 +44,7 @@ public class WekaService {
 //        }
 //    }
 
+    @PostConstruct
     public String trainModel() {
         try {
             File csvFile = new File(LIVE_TFAFFIC_FOR_TRAINING);

@@ -117,28 +117,29 @@
 </div>
 
 <!-- Контент страницы -->
-<form id="captureForm" action="/network/capture" method="post" class="p-4 border rounded shadow bg-light">
+<form  action="/start-capture" method="post" class="p-4 border rounded shadow bg-light">
     <div class="mb-3" style="margin-top: 40px">
         <label class="form-label fw-bold" style="font-size: 15px">Выберите сетевой адаптер:</label>
-        <select name="adapterId" class="form-select form-select-lg">
-            <option>Выберите устройство...</option>
+        <select name="description" class="form-select form-select-lg">
+            <option disabled selected>Выберите устройство...</option>
             <option th:each="networkDevice : ${networkDevices111}"
-                    th:text="${networkDevice.getDescription()}"
-                    th:value="${networkDevice.name}">
+                    th:value="${networkDevice.getDescription()}"
+                    th:text="${networkDevice.getDescription()}">
             </option>
         </select>
     </div>
     <button type="submit" class="btn btn-primary w-100">Выбрать</button>
 </form>
 
+
 <button class="btn btn-secondary my-3" onclick="toggleTheme()">Переключить тему</button>
 <a href="/weka/classify" class="btn btn-success">Classify</a>
 
 
 <!-- Start Capture button -->
-<form action="/start-capture" method="post" class="btn btn-secondary my-3">
-    <button type="submit" class="btn btn-success w-100">Start Capture</button>
-</form>
+<!--<form action="/start-capture" method="post" class="btn btn-secondary my-3">-->
+<!--    <button type="submit" class="btn btn-success w-100">Start Capture</button>-->
+<!--</form>-->
 
 <!-- Stop Capture button -->
 <form action="/stop-capture" method="post" class="btn btn-secondary my-3">

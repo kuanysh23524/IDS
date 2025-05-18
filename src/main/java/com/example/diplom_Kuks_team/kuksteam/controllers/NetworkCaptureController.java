@@ -1,6 +1,9 @@
 package com.example.diplom_Kuks_team.kuksteam.controllers;
 
+import com.example.diplom_Kuks_team.kuksteam.models.NetworkDevices;
+import com.example.diplom_Kuks_team.kuksteam.repositories.NetworkDevicesRepository;
 import com.example.diplom_Kuks_team.kuksteam.services.NetworkCaptureService;
+import com.example.diplom_Kuks_team.kuksteam.services.SearchNetworkDevicesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,7 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 //@RequestMapping("/network")
 public class NetworkCaptureController {
     @Autowired
-    private NetworkCaptureService networkCaptureService;
+    NetworkCaptureService networkCaptureService;
+    SearchNetworkDevicesService searchNetworkDevicesService;
+
 
 // Раньше запускался по умолчанию
 //    @PostMapping("/capture")
@@ -19,8 +24,11 @@ public class NetworkCaptureController {
 //    }
 
     @PostMapping("/start-capture")
-    public String startCapture() {
-        networkCaptureService.startCapture();
+    public String startCapture(NetworkDevices device) {
+//        searchNetworkDevicesService.chooseDevice(device);
+
+        System.out.println("ID c фронта  " + device.getDescription());
+        networkCaptureService.startCapture(device);
         return "redirect:/attacks/traffic_data";
     }
 

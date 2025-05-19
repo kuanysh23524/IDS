@@ -234,6 +234,12 @@ public class NetworkCaptureService {
         if (activeAttackers >= DDOS_UNIQUE_IP_THRESHOLD) {
             attackType = AttackTypes.DDOS_FROM_MULTIPLE_SOURCES.name();
         }
+        // Если ранее определили DDoS с нескольких источников, но по факту это не подтверждается — сбрасываем
+        if (attackType.equals(AttackTypes.DDOS_FROM_MULTIPLE_SOURCES.name()) &&
+                srcMap.values().stream().noneMatch(list -> list.size() > 1)) {
+            attackType = AttackTypes.NORMAL.name();
+        }
+
 
         // Запись в базу данных
         TrafficRecord record = new TrafficRecord(

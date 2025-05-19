@@ -159,6 +159,7 @@
         <th>Destination Port</th>
         <th>Protocol</th>
         <th>Bytes</th>
+        <th>Network Device</th>
         <th>Attack Type</th>
         <th>Time</th>
     </tr>
@@ -173,7 +174,24 @@
             <td th:text="${trafficRecords1.dstPort}"></td>
             <td th:text="${trafficRecords1.protocol}"></td>
             <td th:text="${trafficRecords1.bytes}"></td>
-            <td th:text="${trafficRecords1.attackType}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
+            <td th:text="${trafficRecords1.attackType}"
+                th:style="${trafficRecords1.attackType} == 'DDOS_OR_BRUTE_FORCE' ? 'color: yellow; background-color: #B22222;' : 'color: yellow;'">
+            </td>
+            <td th:text="${trafficRecords1.startTime}"></td>
+        </tr>
+        <tr th:case="'DDOS_FROM_MULTIPLE_SOURCES'" class="table-danger">
+            <td th:text="${trafficRecords1.id}"></td>
+            <td th:text="${trafficRecords1.srcIp}"></td>
+            <td th:text="${trafficRecords1.dstIp}"></td>
+            <td th:text="${trafficRecords1.srcPort}"></td>
+            <td th:text="${trafficRecords1.dstPort}"></td>
+            <td th:text="${trafficRecords1.protocol}"></td>
+            <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
+            <td th:text="${trafficRecords1.attackType}"
+                th:style="${trafficRecords1.attackType} == 'DDOS_FROM_MULTIPLE_SOURCES' ? 'color: yellow; background-color: #B22222;' : 'color: yellow;'">
+            </td>
             <td th:text="${trafficRecords1.startTime}"></td>
         </tr>
         <tr th:case="'PORT_SCAN'" class="table-warning">
@@ -184,6 +202,7 @@
             <td th:text="${trafficRecords1.dstPort}"></td>
             <td th:text="${trafficRecords1.protocol}"></td>
             <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
             <td th:text="${trafficRecords1.attackType}"></td>
             <td th:text="${trafficRecords1.startTime}"></td>
         </tr>
@@ -195,6 +214,7 @@
             <td th:text="${trafficRecords1.dstPort}"></td>
             <td th:text="${trafficRecords1.protocol}"></td>
             <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
             <td th:text="${trafficRecords1.attackType}"></td>
             <td th:text="${trafficRecords1.startTime}"></td>
         </tr>
@@ -206,6 +226,7 @@
             <td th:text="${trafficRecords1.dstPort}"></td>
             <td th:text="${trafficRecords1.protocol}"></td>
             <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
             <td th:text="${trafficRecords1.attackType}"></td>
             <td th:text="${trafficRecords1.startTime}"></td>
         </tr>
@@ -217,6 +238,7 @@
             <td th:text="${trafficRecords1.dstPort}"></td>
             <td th:text="${trafficRecords1.protocol}"></td>
             <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
             <td th:text="${trafficRecords1.attackType}"></td>
             <td th:text="${trafficRecords1.startTime}"></td>
         </tr>
@@ -228,6 +250,7 @@
             <td th:text="${trafficRecords1.dstPort}"></td>
             <td th:text="${trafficRecords1.protocol}"></td>
             <td th:text="${trafficRecords1.bytes}"></td>
+            <td th:text="${trafficRecords1.networkDevices.getDescription()}"></td>
             <td th:text="${trafficRecords1.attackType}"></td>
             <td th:text="${trafficRecords1.startTime}"></td>
         </tr>

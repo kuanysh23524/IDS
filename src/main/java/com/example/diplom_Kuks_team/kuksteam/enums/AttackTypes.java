@@ -7,6 +7,5 @@ public enum AttackTypes {
     PORT_SCAN,
     DDOS_OR_BRUTE_FORCE,
     MALFORMED_PACKET,
-    DDOS_DETECTED,
     DDOS_FROM_MULTIPLE_SOURCES
 }

@@ -1,8 +1,10 @@
 package com.example.diplom_Kuks_team.kuksteam.services;
 
 import com.example.diplom_Kuks_team.kuksteam.enums.AttackTypes;
+import com.example.diplom_Kuks_team.kuksteam.models.AttackTypesInDb;
 import com.example.diplom_Kuks_team.kuksteam.models.NetworkDevices;
 import com.example.diplom_Kuks_team.kuksteam.models.TrafficRecord;
+import com.example.diplom_Kuks_team.kuksteam.repositories.AttackTypesRepository;
 import com.example.diplom_Kuks_team.kuksteam.repositories.TrafficRecordRepository;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
@@ -14,11 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -129,6 +129,8 @@ public class NetworkCaptureService {
     private static final int DDOS_REQUEST_COUNT_TOTAL = 200;
     private static final int DDOS_LONG_INTERVAL_MS = 3000;
     private static final int DDOS_UNIQUE_IP_THRESHOLD = 30;
+    @Autowired
+    WekaService wekaService;
 
     // Для Port Scan
 //    private final Map<String, Integer> requestCounter = new HashMap<>();
@@ -139,6 +141,8 @@ public class NetworkCaptureService {
     // Для продвинутого DDoS (по dstIp)
     private final Map<String, List<Long>> incomingTrafficTimestamps = new HashMap<>();
     private final Map<String, Map<String, List<Long>>> ddosMap = new HashMap<>();
+    @Autowired
+    AttackTypesRepository attackTypesRepository;
     // Типы атак
 
     private void processPacket(Packet packet, FileWriter writer, NetworkDevices networkDevices) throws IOException {
@@ -240,13 +244,42 @@ public class NetworkCaptureService {
             attackType = AttackTypes.NORMAL.name();
         }
 
+        // Формируем строку для классификации
+        String dataToClassify = srcIp + "," + dstIp + "," + srcPort + "," + dstPort + "," + protocol + "," + length;
 
-        // Запись в базу данных
+        // Классификация через Weka
+        String classifyResult = wekaService.classifyInstance(dataToClassify);
+        System.out.println(dataToClassify);
+        System.out.println("Classify Result: " + classifyResult);
+
+        // Проверка: результат входит в enum AttackTypes?
+        boolean knownAttackType = Arrays.stream(AttackTypes.values())
+                .anyMatch(a -> a.name().equals(classifyResult));
+
+        // Если не найден — присваиваем "UNKNOWN"
+        String attackTypeNameForDb = knownAttackType ? classifyResult : "UNKNOWN";
+
+        AttackTypesInDb attackTypesInDb;
+        try {
+            attackTypesInDb = new AttackTypesInDb(attackTypeNameForDb);
+            // Сохраняем в БД (через репозиторий для AttackTypesInDb)
+            attackTypesInDb = attackTypesRepository.save(attackTypesInDb);
+        } catch (Exception e) {
+            System.err.println("Ошибка при создании или сохранении AttackTypesInDb: " + e.getMessage());
+            attackTypesInDb = null;
+        }
+
+        // Создаём запись TrafficRecord с сохранённым AttackTypesInDb
         TrafficRecord record = new TrafficRecord(
-                null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now(), networkDevices
+                null, srcIp, dstIp, srcPort, dstPort, protocol, length,
+                attackType, LocalDateTime.now(), networkDevices, attackTypesInDb
         );
-        trafficRecordRepository.save(record);
 
+        try {
+            trafficRecordRepository.save(record);
+        } catch (Exception e) {
+            System.err.println("Ошибка при сохранении записи в БД: " + e.getMessage());
+        }
 
         // Запись в CSV
         writer.append(String.join(",", srcIp, dstIp,

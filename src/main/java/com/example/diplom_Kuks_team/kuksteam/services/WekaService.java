@@ -91,49 +91,47 @@ public class WekaService {
             // 🔹 Загружаем модель
             File modelFile = new File(MODEL_FILE_PATH);
             if (!modelFile.exists()) {
-                return "❌ Ошибка: Файл модели не найден!";
+                return "-----------";
             }
 
-            // Загрузка модели с использованием Weka SerializationHelper
             Classifier model = (Classifier) SerializationHelper.read(modelFile.getAbsolutePath());
 
-            // 🔹 Загружаем CSV с данными (чтобы получить структуру)
+            // 🔹 Загружаем структуру данных
             CSVLoader loader = new CSVLoader();
-//            loader.setSource(new File(CSV_FILE_PATH));
             loader.setSource(new File(LIVE_TFAFFIC_FOR_TRAINING));
             Instances dataset = loader.getDataSet();
-            dataset.setClassIndex(dataset.numAttributes() - 1); // Устанавливаем последний атрибут как класс
+            dataset.setClassIndex(dataset.numAttributes() - 1);
 
-            // 🔹 Разбираем входные данные
+            // 🔹 Проверка длины
             String[] values = inputData.split(",");
             if (values.length != dataset.numAttributes() - 1) {
-                return "❌ Ошибка: Неверное количество параметров. Ожидалось " + (dataset.numAttributes() - 1);
+                return "-----------";
             }
 
-            // 🔹 Преобразуем входные данные в числовые значения
+            // 🔹 Парсинг значений
             double[] instanceValues = new double[dataset.numAttributes()];
-            for (int i = 0; i < values.length; i++) { // Обрабатываем все атрибуты
+            for (int i = 0; i < values.length; i++) {
                 if (dataset.attribute(i).isNumeric()) {
-                    // Если атрибут числовой, то парсим его как число
                     instanceValues[i] = Double.parseDouble(values[i]);
                 } else {
-                    // Если атрибут категориальный, то получаем индекс значения
-                    instanceValues[i] = dataset.attribute(i).indexOfValue(values[i]);
+                    int idx = dataset.attribute(i).indexOfValue(values[i]);
+                    if (idx == -1) {
+                        return "-----------";
+                    }
+                    instanceValues[i] = idx;
                 }
             }
 
-            // 🔹 Создаём новый объект для классификации
+            instanceValues[dataset.numAttributes() - 1] = Double.NaN;
+
             Instance newInstance = new DenseInstance(1.0, instanceValues);
-            newInstance.setDataset(dataset); // Указываем, что он относится к датасету
+            newInstance.setDataset(dataset);
 
-            // 🔹 Классифицируем новый объект
             double result = model.classifyInstance(newInstance);
-            String predictedClass = dataset.classAttribute().value((int) result);
+            return dataset.classAttribute().value((int) result);
 
-            return "✅ Классифицированный результат: " + predictedClass;
         } catch (Exception e) {
-            // Обработка ошибок
-            return "❌ Ошибка классификации: " + e.getMessage();
+            return "-----------";
         }
     }
 }

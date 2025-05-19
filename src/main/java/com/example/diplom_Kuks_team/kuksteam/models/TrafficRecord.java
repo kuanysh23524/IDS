@@ -37,6 +37,8 @@ public class TrafficRecord {
 
     @ManyToOne
     private NetworkDevices networkDevices;
+    @ManyToOne
+    private AttackTypesInDb attackTypesInDb;
 
 
 }

@@ -247,6 +247,7 @@ public class NetworkCaptureService {
         );
         trafficRecordRepository.save(record);
 
+// сделал из мастера копию актуал-2
 
         // Запись в CSV
         writer.append(String.join(",", srcIp, dstIp,

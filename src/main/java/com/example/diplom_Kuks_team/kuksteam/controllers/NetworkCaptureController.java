@@ -9,20 +9,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-//@RequestMapping("/network")
 public class NetworkCaptureController {
     @Autowired
     NetworkCaptureService networkCaptureService;
     @Autowired
     NetworkDevicesRepository networkDevicesRepository;
-
-
-// Раньше запускался по умолчанию
-//    @PostMapping("/capture")
-//    public String captureTraffic(@RequestParam(name = "adapterId") String name) {
-//        new Thread(() -> networkCaptureService.capturePackets()).start();
-//        return "🚀 Захват сетевого трафика запущен!";
-//    }
 
     @PostMapping("/start-capture")
     public String startCapture(@RequestParam("id") Long id) {

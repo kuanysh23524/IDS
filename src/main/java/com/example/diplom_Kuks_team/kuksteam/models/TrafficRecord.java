@@ -31,7 +31,7 @@ public class TrafficRecord {
     @PrePersist
     public void prePersist() {
         if (this.startTime == null) {
-            this.startTime = LocalDateTime.now();
+            this.startTime = LocalDateTime.now().toLocalDate().atStartOfDay();
         }
     }
 

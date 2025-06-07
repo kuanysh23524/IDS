@@ -27,18 +27,9 @@ public class NetworkCaptureService {
 
     private static final int CAPTURE_DURATION = 900; // Время захвата в секундах
     private static final Map<String, Integer> requestCounter = new HashMap<>();
-    private static final Map<String, Long> lastRequestTime = new HashMap<>();
+
     @Autowired
     TrafficRecordRepository trafficRecordRepository;
-    SearchNetworkDevicesService searchNetworkDevicesService;
-
-
-//    @PostConstruct
-//    public void startCapture() {
-//        CompletableFuture.runAsync(this::capturePackets);
-//    }
-
-
     private volatile boolean capturing = false;
 
     public void startCapture(NetworkDevices networkDevices) {
@@ -68,20 +59,14 @@ public class NetworkCaptureService {
             for (int i = 0; i < devices.size(); i++) {
                 System.out.println(i + ": " + devices.get(i).getName() + " - " + devices.get(i).getDescription());
             }
-//            Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
-//            System.out.println(networkDevices.isPresent());
 
             FileWriter writer = new FileWriter("src/main/resources/data/live_traffic.csv", true);
-//            writer.append("src_ip,dst_ip,src_port,dst_port,protocol,bytes,attack_type\n");
 
             for (PcapNetworkInterface device : devices) {
                 if (device.getName().contains("Loopback")) {
                     continue;
                 }
 
-//                Optional<NetworkDevices> networkDevices = networkDevicesRepository.findByName(name);
-//
-//                if (device.getDescription().contains("MediaTek Wi-Fi 6 MT7921 Wireless LAN Card"))
                 if (device.getDescription().contains(String.valueOf(deviceToChoose.getDescription()))) {
 
 
@@ -118,8 +103,9 @@ public class NetworkCaptureService {
     }
 
 
-    // Method scanning attacks--------------------------------------------------------------------------
-
+    /**
+     * Метод для идентификации типа вторжении
+     **/
     private static final int PORT_SCAN_THRESHOLD = 7;
     private static final int PACKET_SIZE_THRESHOLD = 1400;
 
@@ -130,20 +116,22 @@ public class NetworkCaptureService {
     private static final int DDOS_LONG_INTERVAL_MS = 3000;
     private static final int DDOS_UNIQUE_IP_THRESHOLD = 30;
 
-    // Для Port Scan
-//    private final Map<String, Integer> requestCounter = new HashMap<>();
-
     // Для простого DDoS (от одного IP)
     private final Map<String, List<Long>> recentRequests = new HashMap<>();
 
     // Для продвинутого DDoS (по dstIp)
     private final Map<String, List<Long>> incomingTrafficTimestamps = new HashMap<>();
     private final Map<String, Map<String, List<Long>>> ddosMap = new HashMap<>();
-    // Типы атак
 
+    /**
+     * Типы атак
+     **/
     private void processPacket(Packet packet, FileWriter writer, NetworkDevices networkDevices) throws IOException {
         if (!packet.contains(IpV4Packet.class)) return;
 
+        /**
+         Берем все необходимые параметры с пакета, и дефолтный тип атаки ставим на NORMAL
+         **/
         IpV4Packet ipPacket = packet.get(IpV4Packet.class);
         String srcIp = ipPacket.getHeader().getSrcAddr().getHostAddress();
         String dstIp = ipPacket.getHeader().getDstAddr().getHostAddress();
@@ -160,11 +148,18 @@ public class NetworkCaptureService {
             protocol = "TCP";
 
             // SYN Flood
+            /**
+             Если установлен флаг SYN, но не установлен флаг ACK, то трафик классифицируется как SYN Flood атака.
+             **/
             if (tcpPacket.getHeader().getSyn() && !tcpPacket.getHeader().getAck()) {
                 attackType = AttackTypes.SYN_FLOOD.name();
             }
 
             // NULL Packet
+            /**
+             Если в TCP-пакете не установлен ни один из управляющих флагов,
+             то он классифицируется как NULL-пакет, связанный с определённым типом атаки.
+             **/
             if (!tcpPacket.getHeader().getSyn() &&
                     !tcpPacket.getHeader().getAck() &&
                     !tcpPacket.getHeader().getFin() &&
@@ -206,7 +201,7 @@ public class NetworkCaptureService {
             attackType = AttackTypes.MALFORMED_PACKET.name();
         }
 
-        // === Улучшенное DDoS Detection ===
+        // Улучшенное DDoS Detection
         long currentTime = System.currentTimeMillis();
 
         // Подсчет общего количества пакетов на dstIp за интервал
@@ -246,8 +241,6 @@ public class NetworkCaptureService {
                 null, srcIp, dstIp, srcPort, dstPort, protocol, length, attackType, LocalDateTime.now(), networkDevices
         );
         trafficRecordRepository.save(record);
-
-// сделал из мастера копию актуал-2
 
         // Запись в CSV
         writer.append(String.join(",", srcIp, dstIp,

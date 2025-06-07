@@ -1,7 +1,7 @@
 package com.example.diplom_Kuks_team.kuksteam.enums;
 
 public enum AttackTypes {
-    NORMAL ,
+    NORMAL,
     SYN_FLOOD,
     NULL_PACKET,
     PORT_SCAN,

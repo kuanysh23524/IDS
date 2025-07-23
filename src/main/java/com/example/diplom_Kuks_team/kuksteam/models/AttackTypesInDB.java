@@ -15,4 +15,5 @@ public class AttackTypesInDB {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     String name;
+    //AI-2
 }

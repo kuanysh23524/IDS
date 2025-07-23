@@ -16,4 +16,5 @@ public class AttackTypesInDB {
     Long id;
     String name;
     //AI-1
+    //AI-2
 }

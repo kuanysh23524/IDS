@@ -11,4 +11,6 @@ public interface NetworkDevicesRepository extends JpaRepository<NetworkDevices, 
     Optional<NetworkDevices> findByName(String name);
 
     Optional<NetworkDevices> findById(Long id);
+
+    Optional<NetworkDevices> findByDeviceId(Long deviceId);
 }

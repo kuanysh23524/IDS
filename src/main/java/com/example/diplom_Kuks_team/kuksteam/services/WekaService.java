@@ -15,6 +15,7 @@ import java.io.File;
 @Service
 public class WekaService {
 
+    //
     private static final String DATA_DIR = "src/main/resources/data";
     private static final String MODEL_FILE_PATH = DATA_DIR + "/model.model";
     private static final String LIVE_TFAFFIC_FOR_TRAINING = "src/main/resources/data/live_traffic.csv";

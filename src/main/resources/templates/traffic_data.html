@@ -139,7 +139,7 @@
             <option value="" disabled selected hidden>Выберите устройство...</option>
             <option th:each="networkDevice : ${networkDevices111}"
                     th:value="${networkDevice.id}"
-                    th:text="${networkDevice.description}">
+                    th:text="${networkDevice.name}">
             </option>
         </select>
     </div>

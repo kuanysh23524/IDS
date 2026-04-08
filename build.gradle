@@ -33,6 +33,12 @@ dependencies {
 	implementation 'nz.ac.waikato.cms.weka:weka-stable:3.8.6'
 	implementation 'org.pcap4j:pcap4j-core:1.8.1'
 	implementation 'org.pcap4j:pcap4j-packetfactory-static:1.8.1'
+
+	// ---------------- Новый блок для Apple Silicon ----------------
+	implementation 'net.java.dev.jna:jna:5.13.0'           // последняя JNA с поддержкой arm64
+	implementation 'net.java.dev.jna:jna-platform:5.13.0' // для platform-specific вызовов
+	// -------------------------------------------------------------
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'com.opencsv:opencsv:5.7.1'

@@ -67,7 +67,7 @@ public class NetworkCaptureService {
                     continue;
                 }
 
-                if (device.getDescription().contains(String.valueOf(deviceToChoose.getDescription()))) {
+                if (device.getName().contains(String.valueOf(deviceToChoose.getName()))) {
 
 
                     System.out.println("🔍 Пробуем использовать интерфейс: " + device.getName());
